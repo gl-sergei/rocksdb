@@ -140,6 +140,24 @@ TEST_P(DBWriteTest, IOErrorOnWALWriteTriggersReadOnlyMode) {
   Close();
 }
 
+TEST_P(DBWriteTest, LockWalInEffect) {
+  Options options = GetOptions();
+  Reopen(options);
+  // try the 1st WAL created during open
+  ASSERT_TRUE(Put("key" + ToString(0), "value").ok());
+  ASSERT_TRUE(options.manual_wal_flush != dbfull()->TEST_WALBufferIsEmpty());
+  ASSERT_TRUE(dbfull()->LockWAL().ok());
+  ASSERT_TRUE(dbfull()->TEST_WALBufferIsEmptyNoLock());
+  ASSERT_TRUE(dbfull()->UnlockWAL().ok());
+  // try the 2nd wal created during SwitchWAL
+  dbfull()->TEST_SwitchWAL();
+  ASSERT_TRUE(Put("key" + ToString(0), "value").ok());
+  ASSERT_TRUE(options.manual_wal_flush != dbfull()->TEST_WALBufferIsEmpty());
+  ASSERT_TRUE(dbfull()->LockWAL().ok());
+  ASSERT_TRUE(dbfull()->TEST_WALBufferIsEmptyNoLock());
+  ASSERT_TRUE(dbfull()->UnlockWAL().ok());
+}
+
 INSTANTIATE_TEST_CASE_P(DBWriteTestInstance, DBWriteTest,
                         testing::Values(DBTestBase::kDefault,
                                         DBTestBase::kConcurrentWALWrites,

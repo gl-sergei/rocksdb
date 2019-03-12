@@ -32,6 +32,11 @@ bool DBImpl::TEST_WALBufferIsEmpty() {
   return cur_log_writer->TEST_BufferIsEmpty();
 }
 
+bool DBImpl::TEST_WALBufferIsEmptyNoLock() {
+  log::Writer* cur_log_writer = logs_.back().writer;
+  return cur_log_writer->TEST_BufferIsEmpty();
+}
+
 int64_t DBImpl::TEST_MaxNextLevelOverlappingBytes(
     ColumnFamilyHandle* column_family) {
   ColumnFamilyData* cfd;
